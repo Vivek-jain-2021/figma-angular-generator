@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Full frontend workflow plugin — convert requirements to wireframes, analyze backend APIs, and generate Angular 17 standalone components from Figma designs.",
   "author": {
-    "name": "Your Name",
-    "email": "your@email.com"
+    "name": "Vivek Jain",
+    "email": "vivek.jain@intelliswift.com"
   },
   "license": "MIT",
   "keywords": ["angular", "figma", "codegen", "wireframe", "api", "cors", "jwt"],
