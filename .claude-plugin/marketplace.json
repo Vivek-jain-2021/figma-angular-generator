@@ -15,7 +15,10 @@
         "name": "Vivek Jain",
         "email": "vivek.jain@intelliswift.com"
       },
-      "source": ".",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/Vivek-jain-2021/figma-angular-generator.git"
+      },
       "category": "development",
       "homepage": "https://github.com/Vivek-jain-2021/figma-angular-generator"
     }
