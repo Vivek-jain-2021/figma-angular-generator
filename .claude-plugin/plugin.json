@@ -1,16 +1,8 @@
 {
   "name": "figma-angular-generator",
-  "version": "1.0.0",
   "description": "Full frontend workflow plugin — convert requirements to wireframes, analyze backend APIs, and generate Angular 17 standalone components from Figma designs.",
   "author": {
     "name": "Vivek Jain",
     "email": "vivek.jain@intelliswift.com"
-  },
-  "license": "MIT",
-  "keywords": ["angular", "figma", "codegen", "wireframe", "api", "cors", "jwt"],
-  "commands": "./commands/",
-  "agents": "./agents/",
-  "skills": "./skills/",
-  "hooks": "./hooks/hooks.json",
-  "mcpServers": "./.mcp.json"
+  }
 }
