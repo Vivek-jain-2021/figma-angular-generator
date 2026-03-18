@@ -1,0 +1,23 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "figma-angular-generator",
+  "description": "Full frontend workflow plugin — convert requirements to wireframes, analyze backend APIs, and generate Angular 17 standalone components from Figma designs",
+  "owner": {
+    "name": "Vivek Jain",
+    "email": "your@email.com"
+  },
+  "plugins": [
+    {
+      "name": "figma-angular-generator",
+      "description": "Full frontend workflow plugin — convert requirements to wireframes, analyze backend APIs, and generate Angular 17 standalone components from Figma designs.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Vivek Jain",
+        "email": "your@email.com"
+      },
+      "source": ".",
+      "category": "development",
+      "homepage": "https://github.com/Vivek-jain-2021/figma-angular-generator"
+    }
+  ]
+}
