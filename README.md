@@ -17,6 +17,7 @@ Uses Claude's **built-in Figma connector** — no token setup, no `.mcp.json`, n
 | `/generate-component <figma-url>` | Generate a single Angular standalone component from a Figma node |
 | `/generate-page <figma-url> [--route <name>]` | Generate a full page with all child components and a route snippet |
 | `/generate-all <figma-file-url>` | Generate **all frames** in a Figma file as Angular pages in one run |
+| `/generate-mock-data` | Generate a typed mock data layer + HTTP interceptor so every feature works without a backend |
 
 ---
 
@@ -71,9 +72,9 @@ npm run validate                   # check plugin structure
 
 ```
 .claude/
-  commands/       ← 7 slash commands Claude Code recognizes
+  commands/       ← 8 slash commands Claude Code recognizes
   agents/         ← 4 agents (figma-analyzer, angular-generator, requirements-analyzer, api-analyzer)
-  skills/         ← 6 skills (angular-component, figma-to-css, requirements-to-wireframe, api-to-angular, html-wireframe, wireframes-to-figma)
+  skills/         ← 7 skills (angular-component, figma-to-css, requirements-to-wireframe, api-to-angular, html-wireframe, wireframes-to-figma, mock-data)
   hooks/          ← hooks.json + 3 hook scripts
   scripts/        ← download-assets.sh, process-assets.sh
   .plugin-version ← version stamp with install date and mode
@@ -85,7 +86,7 @@ src/
 
 The installer checks for Node.js, npm, and Angular CLI. If Angular CLI is missing it offers to install it automatically.
 
-After installation the installer validates all 24 files and prints a pass/fail result.
+After installation the installer validates all 26 files and prints a pass/fail result.
 
 ### Reinstall / Update
 
@@ -109,12 +110,14 @@ bash scripts/install.sh ./my-app --force
         ↓
   /api-to-components             ← Phase 5: backend API → Angular services + interceptors + models
         ↓
-  /generate-all <file-url>       ← Phase 6: entire Figma file → all Angular pages at once
+  /generate-mock-data            ← Phase 6: generate mock data layer → test everything without a backend
+        ↓
+  /generate-all <file-url>       ← Phase 7: entire Figma file → all Angular pages at once
                                              OR
   /generate-component <node-url> ←          single Figma node  → Angular component
   /generate-page <node-url>      ←          single Figma frame → Angular page + route snippet
         ↓
-       Asset pipeline            ← Phase 7: images + icons auto-downloaded and optimized
+       Asset pipeline            ← Phase 8: images + icons auto-downloaded and optimized
 ```
 
 Each command is independent — skip any step that does not apply.
@@ -473,6 +476,76 @@ src/app/
 
 ---
 
+## Mock Data Layer
+
+**Command:** `/generate-mock-data`
+
+Generates a fully typed mock data layer so every Angular feature can be developed and tested without a running backend. Uses an HTTP interceptor that is activated by a single environment flag — flip `useMockData: false` when the real API is ready.
+
+### Usage
+
+```bash
+# Generate mock data for all discovered domains
+/generate-mock-data
+
+# 20 records per entity, 500ms simulated network delay
+/generate-mock-data --count 20 --delay 500
+
+# Only mock the orders domain
+/generate-mock-data --domain orders
+
+# Regenerate and overwrite existing mock files
+/generate-mock-data --reset
+```
+
+### What it generates
+
+| File | Purpose |
+|------|---------|
+| `src/app/core/mock/mock-data.ts` | Typed arrays of realistic records for every model, plus list response objects |
+| `src/app/core/mock/mock-api.interceptor.ts` | HTTP interceptor matching URL patterns → returns mock responses with simulated delay |
+| `src/environments/environment.ts` | Adds `useMockData: true` and `mockDelay: 300` |
+| `src/environments/environment.prod.ts` | Adds `useMockData: false` (always off in production) |
+| `src/app/app.config.ts` | Registers mock interceptor first (before auth/error interceptors) |
+
+### Switching between mock and real backend
+
+```typescript
+// src/environments/environment.ts
+export const environment = {
+  production: false,
+  apiUrl: '/api',
+  useMockData: true,   // ← true = use mock data; false = hit real backend
+  mockDelay: 300       // ← simulated latency in ms
+};
+```
+
+Change `useMockData` to `false` and run `ng serve` — all HTTP calls go to the real API. No other code changes needed.
+
+### Mock data quality
+
+- **Realistic content** — real names, product names, dollar amounts, ISO dates. Never "test1" or lorem ipsum.
+- **All enum values covered** — status fields cycle through every possible value so every UI state is testable.
+- **Proper pagination** — list endpoints read `page` and `size` query params and slice the mock array correctly.
+- **Fully nested** — nested objects are always populated; no hidden null bugs.
+- **Type-safe** — all mock constants are typed against your actual model interfaces; TypeScript catches any mismatch at compile time.
+
+### Options
+
+| Flag | Effect |
+|------|--------|
+| `--count <n>` | Records to generate per entity (default: 10) |
+| `--delay <ms>` | Simulated network delay (default: 300) |
+| `--domain <name>` | Only generate mock data for this domain |
+| `--no-auth` | Skip mocking auth endpoints |
+| `--reset` | Overwrite existing mock files |
+
+### Requirements
+
+Run `/api-to-components` first (or have existing model files in `src/app/core/models/`) so the generator has type shapes to work from. If neither exists, it will stop and tell you what to run first.
+
+---
+
 ## Asset Pipeline
 
 When a Figma design is analyzed the plugin automatically:
@@ -507,7 +580,8 @@ figma-angular-generator/
 │   ├── api-to-components.md         /api-to-components
 │   ├── generate-component.md        /generate-component
 │   ├── generate-page.md             /generate-page
-│   └── generate-all.md              /generate-all
+│   ├── generate-all.md              /generate-all
+│   └── generate-mock-data.md        /generate-mock-data
 ├── agents/
 │   ├── requirements-analyzer.md     Requirements → structured UX spec
 │   ├── api-analyzer.md              Backend/OpenAPI → API contract + CORS analysis
@@ -519,7 +593,8 @@ figma-angular-generator/
 │   ├── wireframes-to-figma.md       Push wireframes to Figma via CLI + remote MCP
 │   ├── api-to-angular.md            JWT interceptor, CORS, HTTP service patterns
 │   ├── angular-component.md         Angular 17 component patterns reference
-│   └── figma-to-css.md              Figma → CSS/SCSS conversion reference
+│   ├── figma-to-css.md              Figma → CSS/SCSS conversion reference
+│   └── mock-data.md                 Mock data generation + HTTP interceptor patterns
 ├── hooks/
 │   ├── hooks.json
 │   └── scripts/
