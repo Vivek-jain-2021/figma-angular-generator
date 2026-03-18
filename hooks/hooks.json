@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/scripts/log-generated-file.js"
+          },
+          {
+            "type": "command",
+            "command": "node .claude/hooks/scripts/trigger-asset-download.js"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "mcp__claude_ai_Figma__get_design_context",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/scripts/validate-figma-url.js"
+          }
+        ]
+      }
+    ]
+  }
+}

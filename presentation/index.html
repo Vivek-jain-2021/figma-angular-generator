@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Figma Angular Generator — Client Presentation</title>
+  <style>
+    /* ─── Reset & Base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand-purple: #7C3AED;
+      --brand-purple-light: #A78BFA;
+      --brand-indigo: #4F46E5;
+      --brand-blue: #2563EB;
+      --brand-cyan: #06B6D4;
+      --brand-green: #10B981;
+      --brand-amber: #F59E0B;
+      --brand-rose: #F43F5E;
+      --bg-dark: #0F0F1A;
+      --bg-card: #1A1A2E;
+      --bg-card2: #16213E;
+      --text-primary: #F1F5F9;
+      --text-muted: #94A3B8;
+      --border: rgba(255,255,255,0.08);
+      --glow-purple: 0 0 60px rgba(124,58,237,0.35);
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ─── Slide Container ──────────────────────────────────────── */
+    .deck {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      top: 2.8rem;
+      left: 0;
+      right: 0;
+      bottom: 5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem 4rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      overflow-y: auto;
+      background: transparent !important;
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .slide.exit {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ─── Nav Controls ─────────────────────────────────────────── */
+    .nav {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      z-index: 100;
+      background: rgba(15,15,26,0.85);
+      backdrop-filter: blur(12px);
+      padding: 0.6rem 1.4rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+    .nav button {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.45rem 1.1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .nav button:hover { background: rgba(124,58,237,0.25); border-color: var(--brand-purple-light); }
+    .nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+    .slide-counter {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      min-width: 5rem;
+      text-align: center;
+    }
+    .dot-row {
+      position: fixed;
+      top: 1.2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.55rem;
+      z-index: 100;
+      max-width: 80vw;
+    }
+    .dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.18);
+      transition: background 0.3s, transform 0.3s, width 0.3s;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .dot.active {
+      background: var(--brand-purple-light);
+      width: 18px;
+      border-radius: 3px;
+    }
+
+    /* ─── Background layer (full-screen, behind deck) ─────────── */
+    #bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      transition: background 0.4s ease;
+      pointer-events: none;
+    }
+    .deck { position: relative; z-index: 1; }
+
+    /* ─── Backgrounds (applied to #bg-layer by JS) ─────────────── */
+    .bg-gradient-purple {
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124,58,237,0.28) 0%, transparent 70%),
+                  var(--bg-dark);
+    }
+    .bg-gradient-blue {
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(37,99,235,0.25) 0%, transparent 70%),
+                  var(--bg-dark);
+    }
+    .bg-gradient-green {
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(16,185,129,0.22) 0%, transparent 70%),
+                  var(--bg-dark);
+    }
+    .bg-gradient-cyan {
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(6,182,212,0.22) 0%, transparent 70%),
+                  var(--bg-dark);
+    }
+    .bg-gradient-amber {
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245,158,11,0.22) 0%, transparent 70%),
+                  var(--bg-dark);
+    }
+    .bg-gradient-rose {
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(244,63,94,0.2) 0%, transparent 70%),
+                  var(--bg-dark);
+    }
+    .bg-gradient-indigo {
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(79,70,229,0.26) 0%, transparent 70%),
+                  var(--bg-dark);
+    }
+
+    /* ─── Typography ──────────────────────────────────────────── */
+    .eyebrow {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--brand-purple-light);
+      margin-bottom: 0.75rem;
+    }
+    .headline {
+      font-size: clamp(2rem, 4.5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.12;
+      text-align: center;
+      letter-spacing: -0.02em;
+    }
+    .headline .accent { color: var(--brand-purple-light); }
+    .headline .accent-cyan { color: var(--brand-cyan); }
+    .headline .accent-green { color: var(--brand-green); }
+    .headline .accent-amber { color: var(--brand-amber); }
+    .headline .accent-rose { color: var(--brand-rose); }
+    .subtitle {
+      font-size: clamp(1rem, 1.6vw, 1.2rem);
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.65;
+      max-width: 680px;
+      margin-top: 1rem;
+    }
+    .body-text {
+      font-size: 1rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      max-width: 680px;
+    }
+    .story-quote {
+      font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+      font-style: italic;
+      color: var(--text-primary);
+      line-height: 1.7;
+      text-align: center;
+      max-width: 760px;
+      position: relative;
+      padding: 1.5rem 2rem;
+    }
+    .story-quote::before {
+      content: '"';
+      position: absolute;
+      top: -0.2rem;
+      left: 0.2rem;
+      font-size: 5rem;
+      color: var(--brand-purple);
+      opacity: 0.35;
+      line-height: 1;
+      font-style: normal;
+    }
+
+    /* ─── Cards & Grids ──────────────────────────────────────── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      width: 100%;
+      max-width: 900px;
+      margin-top: 1.5rem;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.9rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .card:hover { border-color: var(--brand-purple); transform: translateY(-3px); }
+    .card-icon { font-size: 1.4rem; }
+    .card-title { font-weight: 700; font-size: 0.88rem; }
+    .card-desc { font-size: 0.76rem; color: var(--text-muted); line-height: 1.45; }
+
+    /* ─── Pipeline / Timeline ───────────────────────────────── */
+    .pipeline {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      width: 100%;
+      max-width: 950px;
+      margin-top: 1.5rem;
+    }
+    .pipe-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    .pipe-step:not(:last-child)::after {
+      content: '→';
+      position: absolute;
+      right: -0.7rem;
+      top: 1.2rem;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      z-index: 2;
+    }
+    .pipe-badge {
+      width: 2.8rem; height: 2.8rem;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+      border: 2px solid var(--border);
+      margin-bottom: 0.6rem;
+      font-weight: 700;
+      position: relative;
+      z-index: 1;
+    }
+    .pipe-label { font-size: 0.72rem; font-weight: 600; text-align: center; color: var(--text-muted); line-height: 1.35; }
+    .pipe-sub { font-size: 0.65rem; text-align: center; color: rgba(148,163,184,0.6); margin-top: 0.15rem; }
+
+    /* ─── Code Block ─────────────────────────────────────────── */
+    .code-block {
+      background: #0D1117;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 1.2rem 1.5rem;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: #E2E8F0;
+      width: 100%;
+      max-width: 680px;
+      overflow-x: auto;
+    }
+    .code-block .kw { color: #C792EA; }
+    .code-block .fn { color: #82AAFF; }
+    .code-block .str { color: #C3E88D; }
+    .code-block .cm { color: #546E7A; font-style: italic; }
+    .code-block .tag { color: #F07178; }
+    .code-block .attr { color: #FFCB6B; }
+    .code-block .prompt { color: var(--brand-purple-light); }
+
+    /* ─── Two-column ─────────────────────────────────────────── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      width: 100%;
+      max-width: 920px;
+      margin-top: 1.5rem;
+    }
+    .col { display: flex; flex-direction: column; gap: 0.8rem; }
+
+    /* ─── Feature List ──────────────────────────────────────── */
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; margin-top: 0.5rem; }
+    .feature-list li {
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-start;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .feature-list li .bullet {
+      width: 1.3rem; height: 1.3rem;
+      border-radius: 50%;
+      background: rgba(124,58,237,0.2);
+      border: 1.5px solid var(--brand-purple);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.6rem;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+      color: var(--brand-purple-light);
+    }
+    .feature-list li strong { color: var(--text-primary); }
+
+    /* ─── Phase Header ──────────────────────────────────────── */
+    .phase-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.35);
+      color: var(--brand-purple-light);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      margin-bottom: 0.75rem;
+    }
+
+    /* ─── Stats ─────────────────────────────────────────────── */
+    .stat-row {
+      display: flex;
+      gap: 2rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .stat-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+    }
+    .stat-num { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; color: var(--brand-purple-light); }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); text-align: center; }
+
+    /* ─── Tag Pills ─────────────────────────────────────────── */
+    .tag-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.8rem; }
+    .tag {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-muted);
+    }
+
+    /* ─── Divider ───────────────────────────────────────────── */
+    .divider {
+      width: 3rem; height: 3px;
+      background: linear-gradient(90deg, var(--brand-purple), var(--brand-cyan));
+      border-radius: 999px;
+      margin: 0.8rem auto;
+    }
+
+    /* ─── Command Block ─────────────────────────────────────── */
+    .cmd {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #0D1117;
+      border: 1px solid rgba(124,58,237,0.4);
+      border-radius: 8px;
+      padding: 0.35rem 0.85rem;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: var(--brand-purple-light);
+    }
+
+    /* ─── Big Arrow Flow ─────────────────────────────────────── */
+    .flow-row {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+    .flow-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.7rem 1.1rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .flow-arrow { font-size: 1.3rem; color: var(--text-muted); }
+
+    /* ─── Banner ─────────────────────────────────────────────── */
+    .banner {
+      background: linear-gradient(135deg, rgba(124,58,237,0.18), rgba(6,182,212,0.12));
+      border: 1px solid rgba(124,58,237,0.3);
+      border-radius: 14px;
+      padding: 1.3rem 2rem;
+      text-align: center;
+      max-width: 780px;
+      margin-top: 1.2rem;
+    }
+    .banner strong { color: var(--brand-purple-light); }
+
+    /* ─── Scrollbar ──────────────────────────────────────────── */
+    .slide::-webkit-scrollbar { width: 4px; }
+    .slide::-webkit-scrollbar-track { background: transparent; }
+    .slide::-webkit-scrollbar-thumb { background: rgba(124,58,237,0.4); border-radius: 4px; }
+
+    /* ─── Keyboard hint ──────────────────────────────────────── */
+    .kbd-hint {
+      position: fixed;
+      top: 1.2rem;
+      right: 1.5rem;
+      font-size: 0.68rem;
+      color: rgba(148,163,184,0.4);
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+<div id="bg-layer"></div>
+<div class="deck" id="deck">
+
+  <!-- ══════════════════════════════════════════════════════════
+       SLIDE 1 — The Problem (Story Opening)
+  ══════════════════════════════════════════════════════════ -->
+  <div class="slide active bg-gradient-rose" data-slide="1">
+    <div class="eyebrow">The Problem</div>
+    <h1 class="headline">
+      Design to Code:<br/>
+      <span class="accent-rose">The Bottleneck Hiding in Plain Sight</span>
+    </h1>
+    <p class="story-quote">
+      The designer hands you a Figma file. You open it. You spend the next two days
+      manually measuring padding, copying hex codes, re-typing layouts into HTML,
+      and wondering why your component looks nothing like the design.
+    </p>
+    <div class="card-grid" style="grid-template-columns: repeat(3, 1fr); max-width: 920px; margin-top: 0.8rem; gap: 0.75rem;">
+      <div class="card" style="border-color: rgba(244,63,94,0.3);">
+        <div class="card-icon">🕐</div>
+        <div class="card-title">Hours Lost</div>
+        <div class="card-desc">Translating Figma spacing, colors &amp; layouts into CSS by hand — every sprint, every screen</div>
+      </div>
+      <div class="card" style="border-color: rgba(244,63,94,0.3);">
+        <div class="card-icon">🔄</div>
+        <div class="card-title">Constant Rework</div>
+        <div class="card-desc">Design changes mean starting over. A single token rename breaks dozens of components</div>
+      </div>
+      <div class="card" style="border-color: rgba(244,63,94,0.3);">
+        <div class="card-icon">🔌</div>
+        <div class="card-title">API Disconnect</div>
+        <div class="card-desc">Backend contracts change; services drift; TypeScript interfaces go out of sync silently</div>
+      </div>
+      <div class="card" style="border-color: rgba(244,63,94,0.3);">
+        <div class="card-icon">📐</div>
+        <div class="card-title">No Single Source of Truth</div>
+        <div class="card-desc">Requirements live in Jira, designs in Figma, code in Git — three systems that never talk to each other</div>
+      </div>
+      <div class="card" style="border-color: rgba(244,63,94,0.3);">
+        <div class="card-icon">🧩</div>
+        <div class="card-title">Inconsistent Components</div>
+        <div class="card-desc">Every developer interprets the design differently — buttons, spacing, and font sizes diverge across the app</div>
+      </div>
+      <div class="card" style="border-color: rgba(244,63,94,0.3);">
+        <div class="card-icon">🐌</div>
+        <div class="card-title">Slow Handoff</div>
+        <div class="card-desc">Developers wait days for designer sign-off. Designers redraw screens that already exist as requirements</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SLIDE 2 — The Solution
+  ══════════════════════════════════════════════════════════ -->
+  <div class="slide bg-gradient-purple" data-slide="2">
+    <div class="eyebrow">The Solution</div>
+    <h1 class="headline">
+      Meet Your<br/>
+      <span class="accent">AI Co-Pilot</span> for Angular
+    </h1>
+    <p class="subtitle">
+      The Figma Angular Generator sits inside Claude Code and automates
+      every translation step — requirements → wireframes → services → components —
+      while you stay in control of what matters.
+    </p>
+    <div class="flow-row">
+      <div class="flow-box">📋<br/>Requirements</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="border-color: var(--brand-cyan); color: var(--brand-cyan);">🚀<br/>Push to Figma</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">🎨<br/>Visual Design</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">⚙️<br/>Setup</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">🔌<br/>Backend API</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">🖥️<br/>Code Gen</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="border-color: var(--brand-green); color: var(--brand-green);">✅<br/>Running App</div>
+    </div>
+    <div class="banner" style="margin-top: 1.5rem;">
+      One plugin. One workflow. Zero manual translation.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SLIDE 3 — SDLC Impact
+  ══════════════════════════════════════════════════════════ -->
+  <div class="slide bg-gradient-indigo" data-slide="3" style="justify-content:flex-start;padding-top:1.2rem;">
+    <div class="eyebrow">SDLC Impact</div>
+    <h1 class="headline" style="font-size:clamp(1.2rem,2.5vw,1.9rem);margin-bottom:0.3rem;">
+      How the Plugin Changes
+      <span class="accent" style="color:var(--brand-purple-light);">Your Development Lifecycle</span>
+    </h1>
+    <div style="display:grid;grid-template-columns:1fr 1.1fr 1fr;gap:0.7rem;width:100%;max-width:1060px;margin-top:0.4rem;">
+
+      <!-- Before column -->
+      <div>
+        <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--brand-rose);margin-bottom:0.5rem;">❌ Before — 2 Days</div>
+        <div style="display:flex;flex-direction:column;gap:0.45rem;">
+          <div class="card" style="border-color:rgba(244,63,94,0.25);background:rgba(244,63,94,0.05);padding:0.65rem 0.85rem;flex-direction:row;align-items:flex-start;gap:0.6rem;">
+            <span style="font-size:0.75rem;font-weight:800;color:var(--brand-rose);flex-shrink:0;min-width:1.2rem;">1</span>
+            <div class="card-desc" style="color:var(--text-primary);">Read Figma, manually measure spacing &amp; colors</div>
+          </div>
+          <div class="card" style="border-color:rgba(244,63,94,0.25);background:rgba(244,63,94,0.05);padding:0.65rem 0.85rem;flex-direction:row;align-items:flex-start;gap:0.6rem;">
+            <span style="font-size:0.75rem;font-weight:800;color:var(--brand-rose);flex-shrink:0;min-width:1.2rem;">2</span>
+            <div class="card-desc" style="color:var(--text-primary);">Write HTML, CSS, TypeScript by hand</div>
+          </div>
+          <div class="card" style="border-color:rgba(244,63,94,0.25);background:rgba(244,63,94,0.05);padding:0.65rem 0.85rem;flex-direction:row;align-items:flex-start;gap:0.6rem;">
+            <span style="font-size:0.75rem;font-weight:800;color:var(--brand-rose);flex-shrink:0;min-width:1.2rem;">3</span>
+            <div class="card-desc" style="color:var(--text-primary);">Manually create HTTP services, models, interceptors</div>
+          </div>
+          <div class="card" style="border-color:rgba(244,63,94,0.25);background:rgba(244,63,94,0.05);padding:0.65rem 0.85rem;flex-direction:row;align-items:flex-start;gap:0.6rem;">
+            <span style="font-size:0.75rem;font-weight:800;color:var(--brand-rose);flex-shrink:0;min-width:1.2rem;">4</span>
+            <div class="card-desc" style="color:var(--text-primary);">Download assets one by one from Figma</div>
+          </div>
+          <div class="card" style="border-color:rgba(244,63,94,0.25);background:rgba(244,63,94,0.05);padding:0.65rem 0.85rem;flex-direction:row;align-items:flex-start;gap:0.6rem;">
+            <span style="font-size:0.75rem;font-weight:800;color:var(--brand-rose);flex-shrink:0;min-width:1.2rem;">5</span>
+            <div class="card-desc" style="color:var(--text-primary);">Fix mismatches between design and code. Repeat.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advantages column -->
+      <div>
+        <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--brand-green);margin-bottom:0.4rem;">✦ Advantages</div>
+        <div style="display:flex;flex-direction:column;gap:0.35rem;">
+          <div class="card" style="border-color:rgba(16,185,129,0.3);padding:0.5rem 0.7rem;flex-direction:row;align-items:flex-start;gap:0.5rem;">
+            <span style="font-size:0.9rem;flex-shrink:0;">⚡</span>
+            <div><div class="card-title" style="color:var(--brand-green);font-size:0.8rem;">Faster Sprint Velocity</div><div class="card-desc">Design-to-code shrinks ~70% — hours, not days.</div></div>
+          </div>
+          <div class="card" style="border-color:rgba(16,185,129,0.3);padding:0.5rem 0.7rem;flex-direction:row;align-items:flex-start;gap:0.5rem;">
+            <span style="font-size:0.9rem;flex-shrink:0;">🎯</span>
+            <div><div class="card-title" style="color:var(--brand-green);font-size:0.8rem;">Design Fidelity Guaranteed</div><div class="card-desc">Generated from Figma tokens — no pixel drift.</div></div>
+          </div>
+          <div class="card" style="border-color:rgba(16,185,129,0.3);padding:0.5rem 0.7rem;flex-direction:row;align-items:flex-start;gap:0.5rem;">
+            <span style="font-size:0.9rem;flex-shrink:0;">🔗</span>
+            <div><div class="card-title" style="color:var(--brand-green);font-size:0.8rem;">Unified Workflow</div><div class="card-desc">Jira → Figma → Angular in one pipeline.</div></div>
+          </div>
+          <div class="card" style="border-color:rgba(16,185,129,0.3);padding:0.5rem 0.7rem;flex-direction:row;align-items:flex-start;gap:0.5rem;">
+            <span style="font-size:0.9rem;flex-shrink:0;">🔒</span>
+            <div><div class="card-title" style="color:var(--brand-green);font-size:0.8rem;">Type-Safe API Integration</div><div class="card-desc">Services stay in sync with backend contracts.</div></div>
+          </div>
+          <div class="card" style="border-color:rgba(16,185,129,0.3);padding:0.5rem 0.7rem;flex-direction:row;align-items:flex-start;gap:0.5rem;">
+            <span style="font-size:0.9rem;flex-shrink:0;">♻️</span>
+            <div><div class="card-title" style="color:var(--brand-green);font-size:0.8rem;">Reduced Rework</div><div class="card-desc">Re-run a command — no manual patching.</div></div>
+          </div>
+          <div class="card" style="border-color:rgba(16,185,129,0.3);padding:0.5rem 0.7rem;flex-direction:row;align-items:flex-start;gap:0.5rem;">
+            <span style="font-size:0.9rem;flex-shrink:0;">🔌</span>
+            <div><div class="card-title" style="color:var(--brand-green);font-size:0.8rem;">Backend Flexibility</div><div class="card-desc">OpenAPI, NestJS, Spring Boot, FastAPI all work.</div></div>
+          </div>
+          <div class="card" style="border-color:rgba(16,185,129,0.3);padding:0.5rem 0.7rem;flex-direction:row;align-items:flex-start;gap:0.5rem;">
+            <span style="font-size:0.9rem;flex-shrink:0;">🚫</span>
+            <div><div class="card-title" style="color:var(--brand-green);font-size:0.8rem;">No Vendor Lock-in</div><div class="card-desc">Output is plain Angular/TypeScript — no runtime dependency.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trade-offs column -->
+      <div>
+        <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--brand-amber);margin-bottom:0.4rem;">✦ Trade-offs</div>
+        <div style="display:flex;flex-direction:column;gap:0.35rem;">
+          <div class="card" style="border-color:rgba(245,158,11,0.3);padding:0.5rem 0.7rem;flex-direction:row;align-items:flex-start;gap:0.5rem;">
+            <span style="font-size:0.9rem;flex-shrink:0;">📐</span>
+            <div><div class="card-title" style="color:var(--brand-amber);font-size:0.8rem;">Figma Quality Dependency</div><div class="card-desc">Poorly named layers or missing Auto Layout reduce output quality.</div></div>
+          </div>
+          <div class="card" style="border-color:rgba(245,158,11,0.3);padding:0.5rem 0.7rem;flex-direction:row;align-items:flex-start;gap:0.5rem;">
+            <span style="font-size:0.9rem;flex-shrink:0;">🧠</span>
+            <div><div class="card-title" style="color:var(--brand-amber);font-size:0.8rem;">Setup &amp; Complexity</div><div class="card-desc">One-time wizard + Figma conventions alignment; adds an AI layer with more moving parts to configure and maintain.</div></div>
+          </div>
+          <div class="card" style="border-color:rgba(245,158,11,0.3);padding:0.5rem 0.7rem;flex-direction:row;align-items:flex-start;gap:0.5rem;">
+            <span style="font-size:0.9rem;flex-shrink:0;">🧩</span>
+            <div><div class="card-title" style="color:var(--brand-amber);font-size:0.8rem;">Complex Logic Still Manual</div><div class="card-desc">NgRx, wizards, animations — plugin handles structure, not business logic.</div></div>
+          </div>
+          <div class="card" style="border-color:rgba(245,158,11,0.3);padding:0.5rem 0.7rem;flex-direction:row;align-items:flex-start;gap:0.5rem;">
+            <span style="font-size:0.9rem;flex-shrink:0;">🔐</span>
+            <div><div class="card-title" style="color:var(--brand-amber);font-size:0.8rem;">Security &amp; Review</div><div class="card-desc">AI-generated code is a strong starting point — security review and developer sign-off are still essential before production.</div></div>
+          </div>
+          <div class="card" style="border-color:rgba(245,158,11,0.3);padding:0.5rem 0.7rem;flex-direction:row;align-items:flex-start;gap:0.5rem;">
+            <span style="font-size:0.9rem;flex-shrink:0;">⚠️</span>
+            <div><div class="card-title" style="color:var(--brand-amber);font-size:0.8rem;">Reliability &amp; Loss of Control</div><div class="card-desc">Output can vary between runs; structure and naming decisions are made by the AI — teams guide rather than dictate.</div></div>
+          </div>
+          <div class="card" style="border-color:rgba(245,158,11,0.3);padding:0.5rem 0.7rem;flex-direction:row;align-items:flex-start;gap:0.5rem;">
+            <span style="font-size:0.9rem;flex-shrink:0;">💰</span>
+            <div><div class="card-title" style="color:var(--brand-amber);font-size:0.8rem;">Cost</div><div class="card-desc">Claude API per-token costs — large codebases or frequent regeneration can add up.</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SDLC phases strip -->
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0.5rem;width:100%;max-width:1060px;margin-top:0.6rem;">
+      <div style="font-size:0.65rem;grid-column:1/-1;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--brand-cyan);margin-bottom:0.1rem;">✦ SDLC Phase Impact</div>
+      <div class="card" style="border-color:rgba(6,182,212,0.25);padding:0.45rem 0.6rem;gap:0.2rem;">
+        <div class="card-title" style="font-size:0.75rem;color:var(--brand-cyan);">📋 Requirements</div>
+        <div class="card-desc" style="font-size:0.68rem;">Wireframes + FigJam in minutes from any source</div>
+      </div>
+      <div class="card" style="border-color:rgba(6,182,212,0.25);padding:0.45rem 0.6rem;gap:0.2rem;">
+        <div class="card-title" style="font-size:0.75rem;color:var(--brand-cyan);">🏗️ Design</div>
+        <div class="card-desc" style="font-size:0.68rem;">Wireframes pushed to Figma — designer polishes only</div>
+      </div>
+      <div class="card" style="border-color:rgba(6,182,212,0.25);padding:0.45rem 0.6rem;gap:0.2rem;">
+        <div class="card-title" style="font-size:0.75rem;color:var(--brand-cyan);">⚙️ Development</div>
+        <div class="card-desc" style="font-size:0.68rem;">Angular code generated from Figma URL directly</div>
+      </div>
+      <div class="card" style="border-color:rgba(6,182,212,0.25);padding:0.45rem 0.6rem;gap:0.2rem;">
+        <div class="card-title" style="font-size:0.75rem;color:var(--brand-cyan);">🧪 Testing</div>
+        <div class="card-desc" style="font-size:0.68rem;">Strict types &amp; conventions reduce bugs before QA</div>
+      </div>
+      <div class="card" style="border-color:rgba(6,182,212,0.25);padding:0.45rem 0.6rem;gap:0.2rem;">
+        <div class="card-title" style="font-size:0.75rem;color:var(--brand-cyan);">🚀 Deployment</div>
+        <div class="card-desc" style="font-size:0.68rem;">Proxy, env &amp; CORS config auto-generated</div>
+      </div>
+      <div class="card" style="border-color:rgba(6,182,212,0.25);padding:0.45rem 0.6rem;gap:0.2rem;">
+        <div class="card-title" style="font-size:0.75rem;color:var(--brand-cyan);">🔁 Change Mgmt</div>
+        <div class="card-desc" style="font-size:0.68rem;">Design changed? Re-run command — done in seconds</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SLIDE 4 — The Big Picture (All 6 Phases)
+  ══════════════════════════════════════════════════════════ -->
+  <div class="slide bg-gradient-blue" data-slide="4">
+    <div class="eyebrow">The Full Journey</div>
+    <h1 class="headline">
+      A <span class="accent-cyan">7-Phase</span> Development Pipeline
+    </h1>
+    <div class="pipeline" style="margin-top: 1.5rem;">
+      <div class="pipe-step">
+        <div class="pipe-badge" style="background: rgba(16,185,129,0.15); border-color: var(--brand-green);">📋</div>
+        <div class="pipe-label">Phase 1<br/>Requirements</div>
+        <div class="pipe-sub">/requirements-to-figma</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-badge" style="background: rgba(6,182,212,0.2); border-color: var(--brand-cyan);">🚀</div>
+        <div class="pipe-label">Phase 2<br/>Push to Figma</div>
+        <div class="pipe-sub">/push-to-figma</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-badge" style="background: rgba(6,182,212,0.15); border-color: var(--brand-cyan);">🎨</div>
+        <div class="pipe-label">Phase 3<br/>Visual Design</div>
+        <div class="pipe-sub">Designer's turn</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-badge" style="background: rgba(124,58,237,0.2); border-color: var(--brand-purple);">⚙️</div>
+        <div class="pipe-label">Phase 4<br/>Setup</div>
+        <div class="pipe-sub">/setup-wizard</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-badge" style="background: rgba(37,99,235,0.18); border-color: var(--brand-blue);">🔌</div>
+        <div class="pipe-label">Phase 5<br/>Backend API</div>
+        <div class="pipe-sub">/api-to-components</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-badge" style="background: rgba(245,158,11,0.15); border-color: var(--brand-amber);">⚡</div>
+        <div class="pipe-label">Phase 6<br/>Code Gen</div>
+        <div class="pipe-sub">/generate-*</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-badge" style="background: rgba(16,185,129,0.2); border-color: var(--brand-green);">📦</div>
+        <div class="pipe-label">Phase 7<br/>Assets</div>
+        <div class="pipe-sub">Auto-pipeline</div>
+      </div>
+    </div>
+    <p class="subtitle" style="margin-top: 1.5rem; font-size: 0.9rem;">
+      Each phase hands off cleanly to the next. The plugin runs each step
+      automatically — you just provide the inputs and review the outputs.
+    </p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SLIDE 2 — Phase 1: Requirements → Wireframes
+  ══════════════════════════════════════════════════════════ -->
+  <div class="slide bg-gradient-green" data-slide="5">
+    <div class="phase-tag">Phase 1 — Requirements → Wireframes</div>
+    <h1 class="headline">
+      Turn <span class="accent-green">Any Requirement</span><br/>
+      Into a Figma-Ready Wireframe
+    </h1>
+    <div class="two-col">
+      <div class="col">
+        <p class="body-text">
+          Feed the plugin a Jira ticket, PDF, Word doc, or plain text.
+          It reads the requirements, makes autonomous UX decisions, and outputs
+          pixel-perfect greyscale wireframes ready to import into Figma — plus
+          a FigJam user-flow diagram.
+        </p>
+        <div class="card" style="margin-top: 0.8rem; border-color: rgba(16,185,129,0.3);">
+          <div class="card-title" style="color: var(--brand-green);">What Claude decides for you</div>
+          <ul class="feature-list">
+            <li><span class="bullet" style="border-color: var(--brand-green); background: rgba(16,185,129,0.1);">→</span><div>Navigation pattern (top nav for ≤4 screens, sidebar for 5–9+)</div></li>
+            <li><span class="bullet" style="border-color: var(--brand-green); background: rgba(16,185,129,0.1);">→</span><div>Color palette by domain (SaaS, healthcare, finance…)</div></li>
+            <li><span class="bullet" style="border-color: var(--brand-green); background: rgba(16,185,129,0.1);">→</span><div>Typography, spacing, density, border-radius</div></li>
+          </ul>
+        </div>
+      </div>
+      <div class="col">
+        <div class="code-block">
+<span class="cm"># Point at your requirements source</span>
+<span class="prompt">/requirements-to-figma</span> jira:PROJ-42
+
+<span class="cm"># Or a file</span>
+<span class="prompt">/requirements-to-figma</span> ./specs/prd.pdf
+
+<span class="cm"># Output artifacts:</span>
+<span class="str">wireframes/*.html</span>        <span class="cm"># Greyscale mockups</span>
+<span class="str">.claude/wireframe-spec.json</span>
+<span class="str">.claude/design-tokens.css</span>
+<span class="cm"># + FigJam user-flow diagram auto-created</span>
+        </div>
+        <div class="tag-row" style="margin-top: 0.6rem;">
+          <span class="tag">Jira Tickets</span>
+          <span class="tag">PDFs</span>
+          <span class="tag">Word Docs</span>
+          <span class="tag">Plain Text</span>
+          <span class="tag">FigJam Diagrams</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SLIDE 2 — Phase 2: Push to Figma
+  ══════════════════════════════════════════════════════════ -->
+  <div class="slide bg-gradient-cyan" data-slide="6">
+    <div class="phase-tag">Phase 2 — Push to Figma</div>
+    <h1 class="headline">
+      Send Wireframes to Figma<br/>
+      <span class="accent-cyan">Directly from the CLI</span>
+    </h1>
+    <div class="two-col">
+      <div class="col">
+        <p class="body-text">
+          One command pushes every generated HTML wireframe into a Figma file
+          as editable frames — no manual html.to.design import, no drag-and-drop.
+          Designers open Figma and the wireframes are already there.
+        </p>
+        <div class="card" style="margin-top: 0.8rem; border-color: rgba(6,182,212,0.3);">
+          <div class="card-title" style="color: var(--brand-cyan);">One-time terminal setup (run once per machine)</div>
+          <div class="code-block" style="margin-top: 0.6rem; font-size: 0.78rem;">
+<span class="cm"># A. Install Figma plugin &amp; log in</span>
+<span class="fn">claude</span> plugin install figma@claude-plugins-official
+
+<span class="cm"># B. Connect Figma remote MCP</span>
+<span class="fn">claude</span> mcp add --transport http figma-remote-mcp \
+  https://mcp.figma.com/mcp
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="code-block">
+<span class="cm"># Push a single wireframe to a specific Figma node</span>
+<span class="prompt">/push-to-figma</span> \
+  --figma <span class="str">"figma.com/design/TFKVd.../Demo?node-id=134-2"</span> \
+  --html <span class="str">".claude/wireframes/html/03-dashboard.html"</span>
+
+<span class="cm"># Push all wireframes to a Figma file</span>
+<span class="prompt">/push-to-figma</span> \
+  --figma <span class="str">"figma.com/design/TFKVd.../Demo"</span> \
+  --html <span class="str">".claude/wireframes/html/"</span>
+
+<span class="cm"># Push FigJam user-flow diagram only</span>
+<span class="prompt">/push-to-figma</span> \
+  --figma <span class="str">"figma.com/design/TFKVd.../Demo"</span> \
+  --figjam-only
+        </div>
+        <div class="tag-row" style="margin-top: 0.6rem;">
+          <span class="tag">Single file or folder</span>
+          <span class="tag">node-id targeting</span>
+          <span class="tag">FigJam diagrams</span>
+          <span class="tag">Auto frame naming</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SLIDE 2 — Phase 3: Visual Design
+  ══════════════════════════════════════════════════════════ -->
+  <div class="slide bg-gradient-cyan" data-slide="7">
+    <div class="phase-tag">Phase 3 — Visual Design</div>
+    <h1 class="headline">
+      The <span class="accent-cyan">Designer's Turn</span><br/>
+      — Wireframes Already in Figma
+    </h1>
+    <p class="subtitle">
+      After <strong>/push-to-figma</strong>, the wireframes are already on the Figma canvas.
+      Designers apply visual polish on top — no re-importing, no re-drawing from scratch.
+    </p>
+    <div class="card-grid" style="grid-template-columns: repeat(3, 1fr); max-width: 800px;">
+      <div class="card" style="border-color: rgba(6,182,212,0.3);">
+        <div class="card-icon">🚀</div>
+        <div class="card-title">Wireframes Already There</div>
+        <div class="card-desc"><code style="font-size:0.8em">/push-to-figma</code> places every screen as a <code style="font-size:0.8em">Wireframe / Screen</code> frame — no manual import needed</div>
+      </div>
+      <div class="card" style="border-color: rgba(6,182,212,0.3);">
+        <div class="card-icon">🎨</div>
+        <div class="card-title">Apply Visual Design</div>
+        <div class="card-desc">Designers add colours, typography, icons, imagery — on top of the exact pre-built layout</div>
+      </div>
+      <div class="card" style="border-color: rgba(6,182,212,0.3);">
+        <div class="card-icon">🔗</div>
+        <div class="card-title">Share Figma URL</div>
+        <div class="card-desc">Copy the Figma node URL and hand it to the developer — that's the entire handoff</div>
+      </div>
+    </div>
+    <div class="banner" style="margin-top: 1rem;">
+      <strong>Pro tip for designers:</strong> Use Auto Layout, name your layers clearly, and use Named Styles — the plugin reads all of these and maps them directly to CSS.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SLIDE 2 — Phase 4: Setup
+  ══════════════════════════════════════════════════════════ -->
+  <div class="slide bg-gradient-purple" data-slide="8">
+    <div class="phase-tag">Phase 4 — Setup</div>
+    <h1 class="headline">
+      <span class="accent">Configure</span> Once,<br/>
+      Generate Forever
+    </h1>
+    <div class="two-col">
+      <div class="col">
+        <p class="body-text">
+          The <strong>/setup-wizard</strong> command detects your Angular project,
+          asks a few questions, and configures everything — so every subsequent
+          command just works.
+        </p>
+        <ul class="feature-list" style="margin-top: 0.5rem;">
+          <li><span class="bullet">✓</span><div><strong>Angular version</strong> — 14, 15, 16, or 17 (syntax adapts automatically)</div></li>
+          <li><span class="bullet">✓</span><div><strong>Output directory</strong> — where components land</div></li>
+          <li><span class="bullet">✓</span><div><strong>Stylesheet format</strong> — SCSS, CSS, or Less</div></li>
+          <li><span class="bullet">✓</span><div><strong>Reference project</strong> — inherit naming conventions from existing codebase</div></li>
+          <li><span class="bullet">✓</span><div><strong>Unit tests</strong> — generate spec files or skip</div></li>
+        </ul>
+      </div>
+      <div class="col">
+        <div class="code-block">
+<span class="cm"># Run once per project</span>
+<span class="prompt">/setup-wizard</span>
+
+<span class="cm"># Or install into new project</span>
+<span class="fn">bash</span> scripts/install.sh --new my-app
+
+<span class="cm"># Or add to existing project</span>
+<span class="fn">bash</span> scripts/install.sh ./my-app
+
+<span class="cm"># Config saved to:</span>
+<span class="str">.claude/figma-generator.config.json</span>
+        </div>
+        <div class="tag-row" style="margin-top: 0.6rem;">
+          <span class="tag">Angular 14–17</span>
+          <span class="tag">Windows / macOS / Linux</span>
+          <span class="tag">SCSS / CSS / Less</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SLIDE 2 — Phase 5: Backend API
+  ══════════════════════════════════════════════════════════ -->
+  <div class="slide bg-gradient-blue" data-slide="9">
+    <div class="phase-tag">Phase 5 — Backend API</div>
+    <h1 class="headline">
+      Generate <span class="accent-cyan">Type-Safe Services</span><br/>
+      from Any API Contract
+    </h1>
+    <div class="two-col">
+      <div class="col">
+        <p class="body-text">
+          Point the plugin at your backend — an OpenAPI spec, a NestJS project,
+          a Spring Boot controller, or even a plain description — and it generates
+          a complete Angular integration layer.
+        </p>
+        <ul class="feature-list" style="margin-top: 0.6rem;">
+          <li><span class="bullet">✓</span><div><strong>TypeScript interfaces</strong> — every DTO / model typed precisely</div></li>
+          <li><span class="bullet">✓</span><div><strong>HTTP services</strong> — one per domain, typed <code style="font-size:0.8em">Observable&lt;T&gt;</code></div></li>
+          <li><span class="bullet">✓</span><div><strong>JWT Auth interceptor</strong> — auto-attaches Bearer tokens</div></li>
+          <li><span class="bullet">✓</span><div><strong>Error interceptor</strong> — 401→logout, 403→forbidden, 0→network error</div></li>
+          <li><span class="bullet">✓</span><div><strong>Dev proxy config</strong> — CORS-free local development</div></li>
+          <li><span class="bullet">✓</span><div><strong>CORS handoff doc</strong> — instructions for your backend team</div></li>
+        </ul>
+      </div>
+      <div class="col">
+        <div class="code-block">
+<span class="prompt">/api-to-components</span> ./api/openapi.yaml
+
+<span class="cm"># Also works with:</span>
+<span class="prompt">/api-to-components</span> ./backend/src/    <span class="cm"># NestJS</span>
+<span class="prompt">/api-to-components</span> ./java-api/src/   <span class="cm"># Spring Boot</span>
+<span class="prompt">/api-to-components</span> ./fastapi/main.py  <span class="cm"># FastAPI</span>
+
+<span class="cm"># Generated output:</span>
+<span class="str">src/app/core/services/</span>
+<span class="str">src/app/core/models/</span>
+<span class="str">src/app/core/interceptors/</span>
+<span class="str">src/environments/</span>
+<span class="str">proxy.conf.json</span>
+<span class="str">.claude/cors-handoff.md</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SLIDE 2 — Phase 5: Code Generation
+  ══════════════════════════════════════════════════════════ -->
+  <div class="slide bg-gradient-amber" data-slide="10">
+    <div class="phase-tag">Phase 6 — Code Generation</div>
+    <h1 class="headline">
+      Paste a Figma URL.<br/>
+      Get <span class="accent-amber">Angular Components.</span>
+    </h1>
+    <div class="two-col">
+      <div class="col">
+        <p class="body-text">
+          Three generation modes to fit every use case. The plugin calls Figma's
+          MCP API, reads the full design spec, and generates production-ready
+          Angular code — no token setup required.
+        </p>
+        <div class="code-block" style="margin-top: 0.8rem;">
+<span class="cm"># One reusable component</span>
+<span class="prompt">/generate-component</span> figma.com/design/.../node-id=42:1
+
+<span class="cm"># Full page + all children + route</span>
+<span class="prompt">/generate-page</span> figma.com/design/.../node-id=10:5
+
+<span class="cm"># Every frame in the file at once</span>
+<span class="prompt">/generate-all</span> figma.com/design/AbCdEf12345/app
+        </div>
+      </div>
+      <div class="col">
+        <ul class="feature-list">
+          <li><span class="bullet">✓</span><div><strong>Auto Layout → CSS Flexbox/Grid</strong> — exact spacing preserved</div></li>
+          <li><span class="bullet">✓</span><div><strong>Colors & typography</strong> — Figma Named Styles → CSS custom properties</div></li>
+          <li><span class="bullet">✓</span><div><strong>Angular 17 signals</strong> — <code style="font-size:0.8em">input&lt;T&gt;()</code>, <code style="font-size:0.8em">@if</code>, <code style="font-size:0.8em">@for</code> syntax</div></li>
+          <li><span class="bullet">✓</span><div><strong>Standalone components</strong> — always, no NgModule boilerplate</div></li>
+          <li><span class="bullet">✓</span><div><strong>BEM class naming</strong> — <code style="font-size:0.8em">.card__title--active</code></div></li>
+          <li><span class="bullet">✓</span><div><strong>Accessibility</strong> — <code style="font-size:0.8em">aria-label</code>, <code style="font-size:0.8em">alt</code> text, semantic HTML</div></li>
+          <li><span class="bullet">✓</span><div><strong>Optional unit tests</strong> — <code style="font-size:0.8em">.spec.ts</code> with TestBed scaffold</div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       SLIDE 2 — Phase 6: Asset Pipeline
+  ══════════════════════════════════════════════════════════ -->
+  <div class="slide bg-gradient-purple" data-slide="11">
+    <div class="phase-tag">Phase 7 — Assets</div>
+    <h1 class="headline">
+      Images & Icons<br/>
+      <span class="accent">Downloaded Automatically</span>
+    </h1>
+    <p class="subtitle">
+      The moment code is generated, a PostToolUse hook fires. It scans the
+      Figma design for all images and icons, downloads them, optimizes them,
+      and places them at the correct Angular asset paths — before you even
+      look at the generated file.
+    </p>
+    <div class="card-grid" style="grid-template-columns: repeat(4, 1fr); max-width: 850px;">
+      <div class="card">
+        <div class="card-icon">🔍</div>
+        <div class="card-title">Detect</div>
+        <div class="card-desc">Scan Figma nodes for images (RECTANGLE) and icons (VECTOR ≤64px)</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">⬇️</div>
+        <div class="card-title">Download</div>
+        <div class="card-desc">Fetch PNG/SVG from Figma using the export API with auth token</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">✂️</div>
+        <div class="card-title">Optimize</div>
+        <div class="card-desc">Run SVG through svgo and PNG through optipng — smaller bundles</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📁</div>
+        <div class="card-title">Organize</div>
+        <div class="card-desc"><code style="font-size:0.75em">src/assets/images/</code> and <code style="font-size:0.75em">src/assets/icons/</code> — correct Angular paths</div>
+      </div>
+    </div>
+    <div class="banner" style="margin-top: 1rem; font-size: 0.9rem;">
+      Generated Angular code always references <strong>/assets/…</strong> paths — never Figma CDN URLs that expire.
+    </div>
+  </div>
+
+
+</div><!-- /deck -->
+
+<!-- Dot indicator -->
+<div class="dot-row" id="dotRow"></div>
+
+<!-- Nav bar -->
+<div class="nav">
+  <button id="btnPrev" onclick="navigate(-1)">← Prev</button>
+  <span class="slide-counter" id="counter">1 / 17</span>
+  <button id="btnNext" onclick="navigate(1)">Next →</button>
+</div>
+
+<div class="kbd-hint">← → keys to navigate</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  let current = 0;
+
+  const dotRow = document.getElementById('dotRow');
+  const counter = document.getElementById('counter');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const bgLayer = document.getElementById('bg-layer');
+
+  const bgClasses = ['bg-gradient-purple','bg-gradient-blue','bg-gradient-green',
+                     'bg-gradient-cyan','bg-gradient-amber','bg-gradient-rose','bg-gradient-indigo'];
+
+  function syncBg(slideEl) {
+    bgClasses.forEach(c => bgLayer.classList.remove(c));
+    const match = bgClasses.find(c => slideEl.classList.contains(c));
+    if (match) bgLayer.classList.add(match);
+  }
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goTo(i);
+    dotRow.appendChild(dot);
+  });
+
+  // Init bg
+  syncBg(slides[0]);
+
+  function updateUI() {
+    counter.textContent = `${current + 1} / ${total}`;
+    btnPrev.disabled = current === 0;
+    btnNext.disabled = current === total - 1;
+    dotRow.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+    });
+  }
+
+  function goTo(index) {
+    if (index === current) return;
+    slides[current].classList.remove('active');
+    slides[index].classList.add('active');
+    slides[index].scrollTop = 0;
+    syncBg(slides[index]);
+    current = index;
+    updateUI();
+  }
+
+  function navigate(dir) {
+    const next = current + dir;
+    if (next >= 0 && next < total) goTo(next);
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') navigate(-1);
+  });
+
+  updateUI();
+</script>
+</body>
+</html>

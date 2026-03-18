@@ -1,0 +1,13 @@
+{
+  "name": "figma-angular-generator",
+  "version": "1.0.0",
+  "description": "Claude Code plugin — full frontend workflow from requirements to Angular components",
+  "scripts": {
+    "install-to": "bash scripts/install.sh",
+    "install-new": "bash scripts/install.sh --new",
+    "validate": "bash scripts/validate.sh",
+    "help": "echo 'Usage:\\n  npm run install-to <path>         install into existing Angular project\\n  npm run install-new <name>        create new Angular project + install\\n  npm run validate                  check plugin structure'"
+  },
+  "keywords": ["angular", "figma", "claude", "codegen", "plugin"],
+  "license": "MIT"
+}
